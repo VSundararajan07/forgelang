@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>ForgeLang · Conjecture Forge</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="ForgeLang home"><span class="brand-mark">F</span><span>Conjecture <b>Forge</b></span></a>
+      <div class="top-meta"><span class="status-dot"></span> ForgeLang <span class="version">v0.1</span></div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="eyebrow"><span class="eyebrow-line"></span> EXPERIMENTAL MATHEMATICS</div>
+        <h1>Forge a claim.<br><span>Test its boundaries.</span></h1>
+        <p>Write a graph-theory conjecture in ForgeLang. Search finite graphs for a counterexample and inspect the result.</p>
+      </section>
+
+      <section class="workspace" aria-label="Conjecture editor and search controls">
+        <div class="editor-panel panel">
+          <div class="panel-heading">
+            <div><span class="step-number">01</span><h2>Conjecture editor</h2></div>
+            <span class="file-pill"><span class="file-dot"></span> .forge</span>
+          </div>
+          <label class="sr-only" for="source">ForgeLang source</label>
+          <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off">{{ example }}</textarea>
+          <div class="editor-footer">
+            <span><kbd>V</kbd> forall &nbsp; <kbd>E</kbd> exists &nbsp; <kbd>=&gt;</kbd> implies &nbsp; <kbd>&lt;=&gt;</kbd> iff</span>
+            <button type="button" class="text-button" id="load-example">Load example ↗</button>
+          </div>
+          <div class="syntax-note"><span class="info-icon">i</span><span>Start with <code>conjecture "Name":</code> followed by <code>V(G in SimpleGraphs: ...)</code>.</span></div>
+        </div>
+
+        <aside class="controls-column">
+          <div class="panel controls-panel">
+            <div class="panel-heading"><div><span class="step-number">02</span><h2>Search settings</h2></div></div>
+            <label for="max-vertices">Maximum vertices <span class="label-value" id="vertex-value">5</span></label>
+            <input id="max-vertices" type="range" min="1" max="7" value="5">
+            <div class="range-labels"><span>1 vertex</span><span>7 vertices</span></div>
+            <label for="max-graphs" class="graphs-label">Graph search limit</label>
+            <select id="max-graphs">
+              <option value="1000">1,000 graphs · Quick</option>
+              <option value="10000">10,000 graphs · Balanced</option>
+              <option value="100000" selected>100,000 graphs · Thorough</option>
+              <option value="250000">250,000 graphs · Extended</option>
+            </select>
+            <button type="button" id="check-button" class="primary-button"><span class="button-icon">▶</span><span id="button-label">Check conjecture</span><span class="button-arrow">→</span></button>
+            <p class="privacy-note"><span class="lock-icon">⌑</span> Runs on this Python server. Input is treated as ForgeLang, never as Python code.</p>
+          </div>
+          <div class="quick-ref panel">
+            <h3>Symbol quick reference</h3>
+            <div class="symbol-grid">
+              <div><kbd>=&gt;</kbd><span>implies</span></div><div><kbd>&lt;=&gt;</kbd><span>iff</span></div>
+              <div><kbd>&amp;</kbd><span>and</span></div><div><kbd>|</kbd><span>or</span></div>
+              <div><kbd>!</kbd><span>not</span></div><div><kbd>V(...)</kbd><span>for all</span></div>
+              <div><kbd>E(...)</kbd><span>exists</span></div><div><kbd>==</kbd><span>equals</span></div>
+            </div>
+            <a href="https://github.com" target="_blank" rel="noreferrer" class="docs-link">ForgeLang reference <span>↗</span></a>
+          </div>
+        </aside>
+      </section>
+
+      <section id="results" class="results-section" aria-live="polite" hidden>
+        <div class="results-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> SEARCH REPORT</div><h2 id="result-title">Results</h2></div><span id="result-status" class="result-status"></span></div>
+        <div id="error-box" class="error-box" hidden></div>
+        <div id="result-content" class="result-grid" hidden>
+          <div class="panel result-summary">
+            <div class="result-kicker">SEARCH SUMMARY</div>
+            <p id="result-message"></p>
+            <div class="stats-row"><div><strong id="stat-examined">—</strong><span>graphs examined</span></div><div><strong id="stat-time">—</strong><span>seconds</span></div><div><strong id="stat-bound">—</strong><span>vertex bound</span></div></div>
+            <div id="certificate-line" class="certificate-line" hidden></div>
+          </div>
+          <div id="graph-panel" class="panel graph-panel" hidden>
+            <div class="graph-title"><div><div class="result-kicker">MINIMIZED COUNTEREXAMPLE</div><h3 id="graph-heading">Graph</h3></div><span class="graph-tag">Simple graph</span></div>
+            <svg id="graph-svg" viewBox="0 0 420 300" role="img" aria-label="Counterexample graph visualization"></svg>
+            <div id="graph-details" class="graph-details"></div>
+          </div>
+        </div>
+        <p class="proof-warning"><span>!</span> A finite search that finds no counterexample does not prove a conjecture for all graphs.</p>
+      </section>
+
+      <section class="examples-section">
+        <div class="section-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> GET STARTED</div><h2>Try a conjecture</h2></div><p>Load a sample into the editor, then run the search.</p></div>
+        <div id="example-cards" class="example-cards">
+          <button class="example-card" data-example="tree_characterization.forge"><span class="example-index">01 / EQUIVALENCE</span><strong>Tree characterization</strong><code>tree(G) &lt;=&gt; ...</code><span class="example-action">Load example ↗</span></button>
+          <button class="example-card" data-example="bipartite_odd_cycle.forge"><span class="example-index">02 / BICONDITIONAL</span><strong>Bipartite characterization</strong><code>bipartite(G) &lt;=&gt; !has_odd_cycle(G)</code><span class="example-action">Load example ↗</span></button>
+          <button class="example-card" data-example="minimum_degree_hamiltonian.forge"><span class="example-index">03 / IMPLICATION</span><strong>Minimum-degree Hamiltonicity</strong><code>(connected(G) &amp; min_degree(G) &gt;= 2) =&gt; ...</code><span class="example-action">Load example ↗</span></button>
+        </div>
+      </section>
+    </main>
+    <footer><span class="footer-brand">F / CONJECTURE FORGE</span><span>Computational exploration, not automatic proof.</span></footer>
+  </div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
