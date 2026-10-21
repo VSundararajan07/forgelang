@@ -1,0 +1,4 @@
+conjecture "Bipartite Characterization":
+    V(G in SimpleGraphs:
+        bipartite(G) <=> !has_odd_cycle(G)
+    )

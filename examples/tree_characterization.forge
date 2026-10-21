@@ -1,0 +1,4 @@
+conjecture "Tree Characterization":
+    V(G in SimpleGraphs:
+        tree(G) <=> (connected(G) & edges(G) == vertices(G) - 1)
+    )

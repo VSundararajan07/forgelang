@@ -1,0 +1,4 @@
+conjecture "Minimum Degree Hamiltonicity":
+    V(G in SimpleGraphs:
+        (connected(G) & min_degree(G) >= 2) => hamiltonian(G)
+    )

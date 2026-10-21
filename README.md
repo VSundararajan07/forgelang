@@ -33,3 +33,18 @@ Construct `Conjecture(name, statement, premise, conclusion)` with two determinis
 `src/conjecture_forge/` contains graph representation, generation, conjecture definitions, search, minimization, certificates, and CLI. `tests/`, `benchmarks/`, and `docs/` contain quality and research materials.
 
 MIT licensed; see `LICENSE`.
+
+## ForgeLang (early version)
+
+ForgeLang lets you write graph conjectures using symbolic logic. See
+[`docs/FORGELANG.md`](docs/FORGELANG.md) and the `.forge` examples in `examples/`.
+
+Install the project and its dependencies, then run a conjecture:
+
+```powershell
+python -m pip install -e .
+python main.py check examples/minimum_degree_hamiltonian.forge --max-vertices 5
+```
+
+The engine searches a finite range of graphs. Finding a counterexample disproves
+the conjecture; finding none within the selected bounds is not a proof.

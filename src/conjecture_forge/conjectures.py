@@ -28,25 +28,6 @@ def connected_perfect_matching_conjecture():
         lambda g: g.n >= 2 and g.is_connected(),
         lambda g: g.has_perfect_matching())
 
-def tree_perfect_matching_conjecture():
-    def is_tree(g):
-        return (
-            g.n >= 2
-            and g.is_connected()
-            and len(g.edges) == g.n - 1
-        )
-
-    return Conjecture(
-        "tree-implies-perfect-matching",
-        "Every tree with at least two vertices has a perfect matching.",
-        is_tree,
-        lambda g: g.has_perfect_matching()
-    )
-
 def built_in_conjectures():
-    cs = [
-        hamiltonicity_conjecture(),
-        connected_perfect_matching_conjecture(),
-        tree_perfect_matching_conjecture()
-    ]
+    cs = [hamiltonicity_conjecture(), connected_perfect_matching_conjecture()]
     return {c.name: c for c in cs}
