@@ -42,9 +42,13 @@ start: "conjecture" STRING ":" expr
 ?product: unary
         | product "*" unary                    -> multiply
         | product "/" unary                    -> divide
+        | product "//" unary                   -> floor_divide
+        | product "%" unary                    -> modulo
 ?unary: "!" unary                             -> not_op
       | "-" unary                              -> negate
-      | atom
+      | power
+?power: atom
+      | atom "**" unary                       -> power
 ?atom: quantifier
      | function_call
      | NAME                                    -> variable
@@ -146,6 +150,15 @@ class _BuildAst(Transformer):
     def divide(self, left, right):
         return ("/", left, right)
 
+    def floor_divide(self, left, right):
+        return ("//", left, right)
+
+    def modulo(self, left, right):
+        return ("%", left, right)
+
+    def power(self, left, right):
+        return ("**", left, right)
+
 
 _PARSER = Lark(GRAMMAR, parser="lalr", transformer=_BuildAst())
 
@@ -222,6 +235,9 @@ def _validate_expression(node: tuple, bound_variables: set[str], graph_variable:
             "max_degree": 1, "connected": 1, "tree": 1, "bipartite": 1,
             "hamiltonian": 1, "has_perfect_matching": 1,
             "has_odd_cycle": 1,
+            # Integer / number-theory helpers
+            "abs": 1, "gcd": 2, "lcm": 2,
+            "is_even": 1, "is_odd": 1, "divides": 2,
         }
         if name not in arities:
             raise ForgeLangSemanticError(f"Unknown ForgeLang function '{name}'.")
@@ -235,7 +251,7 @@ def _validate_expression(node: tuple, bound_variables: set[str], graph_variable:
     if kind in {"not", "neg"}:
         _validate_expression(node[1], bound_variables, graph_variable)
         return
-    if kind in {"and", "or", "implies", "iff", "+", "-", "*", "/"}:
+    if kind in {"and", "or", "implies", "iff", "+", "-", "*", "/", "//", "%", "**"}:
         _validate_expression(node[1], bound_variables, graph_variable)
         _validate_expression(node[2], bound_variables, graph_variable)
         return
@@ -313,6 +329,38 @@ def _evaluate(node: tuple, graph: Graph, environment: dict[str, Any]) -> Any:
             return args[0].has_perfect_matching()
         if name == "has_odd_cycle":
             return not _is_bipartite(args[0])
+        if name == "abs":
+            value = args[0]
+            if not isinstance(value, int):
+                raise ForgeLangSemanticError("abs(x) requires an integer.")
+            return abs(value)
+        if name == "gcd":
+            a, b = args
+            if not isinstance(a, int) or not isinstance(b, int):
+                raise ForgeLangSemanticError("gcd(a, b) requires integer arguments.")
+            import math
+            return math.gcd(a, b)
+        if name == "lcm":
+            a, b = args
+            if not isinstance(a, int) or not isinstance(b, int):
+                raise ForgeLangSemanticError("lcm(a, b) requires integer arguments.")
+            import math
+            return math.lcm(a, b)
+        if name == "is_even":
+            if not isinstance(args[0], int):
+                raise ForgeLangSemanticError("is_even(n) requires an integer.")
+            return args[0] % 2 == 0
+        if name == "is_odd":
+            if not isinstance(args[0], int):
+                raise ForgeLangSemanticError("is_odd(n) requires an integer.")
+            return args[0] % 2 != 0
+        if name == "divides":
+            a, b = args
+            if not isinstance(a, int) or not isinstance(b, int):
+                raise ForgeLangSemanticError("divides(a, b) requires integer arguments.")
+            if a == 0:
+                raise ForgeLangSemanticError("divides(a, b): the divisor cannot be zero.")
+            return b % a == 0
     if kind == "not":
         return not bool(_evaluate(node[1], graph, environment))
     if kind == "neg":
@@ -330,7 +378,7 @@ def _evaluate(node: tuple, graph: Graph, environment: dict[str, Any]) -> Any:
         if kind == "implies":
             return (not left) or right
         return left == right
-    if kind in {"+", "-", "*", "/"}:
+    if kind in {"+", "-", "*", "/", "//", "%", "**"}:
         left = _evaluate(node[1], graph, environment)
         right = _evaluate(node[2], graph, environment)
         if not isinstance(left, int) or not isinstance(right, int):
@@ -341,11 +389,22 @@ def _evaluate(node: tuple, graph: Graph, environment: dict[str, Any]) -> Any:
             return left - right
         if kind == "*":
             return left * right
-        if right == 0:
+        if kind in {"/", "//", "%"} and right == 0:
             raise ForgeLangSemanticError("Division by zero.")
-        if left % right:
-            raise ForgeLangSemanticError("ForgeLang division currently requires an integer result.")
-        return left // right
+        if kind == "/":
+            if left % right:
+                raise ForgeLangSemanticError("ForgeLang division currently requires an integer result.")
+            return left // right
+        if kind == "//":
+            return left // right
+        if kind == "%":
+            return left % right
+        if kind == "**":
+            if right < 0:
+                raise ForgeLangSemanticError("Exponentiation requires a non-negative integer exponent.")
+            if right > 1000:
+                raise ForgeLangSemanticError("Exponent is too large (maximum supported exponent is 1000).")
+            return left ** right
     if kind == "compare":
         operator = node[1]
         left = _evaluate(node[2], graph, environment)

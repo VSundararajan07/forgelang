@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ForgeLang Reference</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#131b2e;--line:#293650;--text:#e8edf7;--muted:#aab6cc;--accent:#91c8ff;--code:#080d18}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:36px 22px 24px;border-bottom:1px solid var(--line);background:#10182a}header,main{max-width:1100px;margin:auto}
+h1{margin:0;font-size:2rem}h2{margin-top:2rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}h3{margin-bottom:.35rem}
+p,.muted{color:var(--muted)}main{padding:22px}nav{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}nav a{color:var(--accent);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+section,.note{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin:16px 0}
+code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}code{color:#c8e4ff}pre{background:var(--code);padding:14px;border-radius:10px;overflow:auto;white-space:pre-wrap}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid var(--line)}th{color:var(--accent)}
+input{width:100%;padding:12px;background:var(--code);border:1px solid var(--line);border-radius:9px;color:var(--text);font:inherit}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--accent);margin-right:4px}
+footer{padding:25px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<header>
+<h1>ForgeLang Reference</h1>
+<p>A compact, safe language for writing finite graph-theory conjectures.</p>
+<nav><a href="#structure">Program structure</a><a href="#logic">Logic</a><a href="#arithmetic">Arithmetic</a><a href="#quantifiers">Quantifiers</a><a href="#functions">Functions</a><a href="#limits">Current limits</a></nav>
+</header>
+<main>
+<section id="structure"><h2>1. Program structure</h2>
+<p>Every program declares a name and a formula. At present, the outermost quantifier must range universally over simple graphs.</p>
+<pre>conjecture "Minimum Degree Hamiltonicity":
+    V(G in SimpleGraphs:
+        (connected(G) &amp; min_degree(G) &gt;= 2) =&gt; hamiltonian(G)
+    )</pre>
+<p>Use <code>#</code> to start a comment. Whitespace and line breaks separate tokens but do not change operator precedence.</p></section>
+<section id="logic"><h2>2. Logical operators and comparisons</h2>
+<table><thead><tr><th>Operator</th><th>Meaning</th><th>Example</th></tr></thead><tbody>
+<tr><td><code>!</code></td><td>Logical NOT</td><td><code>!connected(G)</code></td></tr>
+<tr><td><code>&amp;</code></td><td>Logical AND</td><td><code>tree(G) &amp; bipartite(G)</code></td></tr>
+<tr><td><code>|</code></td><td>Logical OR</td><td><code>tree(G) | hamiltonian(G)</code></td></tr>
+<tr><td><code>=&gt;</code></td><td>Implication</td><td><code>P =&gt; Q</code></td></tr>
+<tr><td><code>&lt;=&gt;</code></td><td>Logical equivalence</td><td><code>P &lt;=&gt; Q</code></td></tr>
+<tr><td><code>==</code>, <code>!=</code></td><td>Equal, not equal</td><td><code>vertices(G) != 0</code></td></tr>
+<tr><td><code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code></td><td>Integer comparisons</td><td><code>degree(G, v) &gt;= 2</code></td></tr>
+</tbody></table></section>
+<section id="arithmetic"><h2>3. Integer arithmetic</h2>
+<table><thead><tr><th>Operator</th><th>Meaning</th><th>Example</th></tr></thead><tbody>
+<tr><td><code>+</code></td><td>Addition</td><td><code>vertices(G) + 1</code></td></tr>
+<tr><td><code>-</code></td><td>Subtraction; unary minus</td><td><code>degree(G, v) - 1</code></td></tr>
+<tr><td><code>*</code></td><td>Multiplication</td><td><code>vertices(G) * (vertices(G) - 1)</code></td></tr>
+<tr><td><code>/</code></td><td>Integer-valued division only; non-exact results raise an error</td><td><code>edges(G) / 2</code></td></tr>
+<tr><td><code>//</code></td><td>Floor division</td><td><code>edges(G) // 2</code></td></tr>
+<tr><td><code>%</code></td><td>Remainder</td><td><code>degree(G, v) % 2 == 0</code></td></tr>
+<tr><td><code>**</code></td><td>Exponentiation; exponent must be from 0 to 1000</td><td><code>vertices(G) ** 2</code></td></tr>
+</tbody></table>
+<p>Examples: <code>is_even(degree(G, v))</code>, <code>edges(G) % 2 == 0</code>, <code>2 ** 3 == 8</code>.</p></section>
+<section id="quantifiers"><h2>4. Quantifiers</h2>
+<p><span class="pill">V</span> means “for every”; <span class="pill">E</span> means “there exists”. Nested quantifiers range over vertices of the current graph.</p>
+<pre>V(v in Vertices(G): degree(G, v) &gt;= 1)
+E(v in Vertices(G): degree(G, v) == 0)</pre>
+<p>The outer form <code>V(G in SimpleGraphs: ...)</code> is required. Top-level existential graph claims are not supported yet.</p></section>
+<section id="functions"><h2>5. Built-in functions</h2>
+<input id="search" type="search" placeholder="Filter functions (e.g. degree, gcd, matching)…" aria-label="Filter built-in functions">
+<table id="functionTable"><thead><tr><th>Function</th><th>Meaning</th><th>Example</th></tr></thead><tbody>
+<tr><td><code>vertices(G)</code></td><td>Number of vertices</td><td><code>vertices(G) &gt;= 1</code></td></tr>
+<tr><td><code>edges(G)</code></td><td>Number of edges</td><td><code>edges(G) &lt;= vertices(G) * (vertices(G)-1) // 2</code></td></tr>
+<tr><td><code>degree(G, v)</code></td><td>Degree of vertex v</td><td><code>degree(G, v) % 2 == 0</code></td></tr>
+<tr><td><code>min_degree(G)</code></td><td>Minimum vertex degree (0 for an empty graph)</td><td><code>min_degree(G) &gt;= 2</code></td></tr>
+<tr><td><code>max_degree(G)</code></td><td>Maximum vertex degree (0 for an empty graph)</td><td><code>max_degree(G) &lt;= vertices(G)-1</code></td></tr>
+<tr><td><code>connected(G)</code></td><td>Whether G is connected</td><td><code>connected(G) =&gt; tree(G) | hamiltonian(G)</code></td></tr>
+<tr><td><code>tree(G)</code></td><td>Whether G is a tree</td><td><code>tree(G) =&gt; edges(G) == vertices(G)-1</code></td></tr>
+<tr><td><code>bipartite(G)</code></td><td>Whether G is bipartite</td><td><code>bipartite(G) =&gt; !has_odd_cycle(G)</code></td></tr>
+<tr><td><code>hamiltonian(G)</code></td><td>Whether G has a Hamiltonian cycle</td><td><code>hamiltonian(G) =&gt; connected(G)</code></td></tr>
+<tr><td><code>has_perfect_matching(G)</code></td><td>Whether G has a perfect matching</td><td><code>has_perfect_matching(G) =&gt; vertices(G) % 2 == 0</code></td></tr>
+<tr><td><code>has_odd_cycle(G)</code></td><td>Whether G contains an odd cycle</td><td><code>bipartite(G) &lt;=&gt; !has_odd_cycle(G)</code></td></tr>
+<tr><td><code>abs(n)</code></td><td>Absolute value of an integer</td><td><code>abs(-3) == 3</code></td></tr>
+<tr><td><code>gcd(a, b)</code></td><td>Greatest common divisor</td><td><code>gcd(vertices(G), edges(G)) &gt;= 1</code></td></tr>
+<tr><td><code>lcm(a, b)</code></td><td>Least common multiple</td><td><code>lcm(2, 3) == 6</code></td></tr>
+<tr><td><code>is_even(n)</code></td><td>Whether integer n is even</td><td><code>is_even(vertices(G))</code></td></tr>
+<tr><td><code>is_odd(n)</code></td><td>Whether integer n is odd</td><td><code>is_odd(edges(G))</code></td></tr>
+<tr><td><code>divides(a, b)</code></td><td>True when a divides b; a must not be zero</td><td><code>divides(2, edges(G))</code></td></tr>
+</tbody></table>
+</section>
+<section id="limits"><h2>6. Important limits and semantics</h2>
+<ul>
+<li>ForgeLang is not Python; arbitrary Python expressions and attribute access are not allowed.</li>
+<li>Arithmetic operands must evaluate to integers.</li>
+<li><code>/</code> only succeeds when the quotient is an integer. Use <code>//</code> for floor division and <code>%</code> for remainder.</li>
+<li>Division or modulo by zero raises a ForgeLang semantic error.</li>
+<li>Exponentiation accepts non-negative integer exponents up to 1000.</li>
+<li>The checker searches only the finite graph range configured in the app. Finding no counterexample in that range is not a proof of the conjecture.</li>
+</ul></section>
+<div class="note"><strong>Tip:</strong> For example conjectures, open the Examples selector on the main page. This page documents the language; it does not run conjectures.</div>
+</main>
+<footer>ForgeLang v0.1 — language reference</footer>
+<script>
+const search = document.getElementById('search');
+search.addEventListener('input', () => {
+  const query = search.value.toLowerCase();
+  for (const row of document.querySelectorAll('#functionTable tbody tr')) {
+    row.hidden = !row.textContent.toLowerCase().includes(query);
+  }
+});
+</script>
+</body>
+</html>

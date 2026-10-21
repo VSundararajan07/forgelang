@@ -4,7 +4,6 @@ from __future__ import annotations
 import os
 import html
 import json
-import mimetypes
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -45,7 +44,12 @@ def run_check(data: dict) -> tuple[int, dict]:
         parsed = parse_forgelang(source)
         conjecture = to_conjecture(parsed)
         total_graphs = estimate_total_graphs(max_vertices, 1)
-        result = search_conjecture(conjecture, max_vertices=max_vertices, min_vertices=1, max_graphs=max_graphs)
+        result = search_conjecture(
+            conjecture,
+            max_vertices=max_vertices,
+            min_vertices=1,
+            max_graphs=max_graphs,
+        )
         response = {
             "conjecture_name": parsed.name,
             "statement": parsed.statement,
@@ -59,8 +63,11 @@ def run_check(data: dict) -> tuple[int, dict]:
             complete = result.graphs_examined >= total_graphs
             response.update({
                 "status": "NO_COUNTEREXAMPLE_WITHIN_BOUND",
-                "message": ("No counterexample was found in the explored search. This is not a proof."
-                            if complete else "No counterexample was found before the search limit. This is not a proof."),
+                "message": (
+                    "No counterexample was found in the explored search. This is not a proof."
+                    if complete
+                    else "No counterexample was found before the search limit. This is not a proof."
+                ),
                 "search_complete": complete,
             })
             return 200, response
@@ -70,7 +77,11 @@ def run_check(data: dict) -> tuple[int, dict]:
             "status": "COUNTEREXAMPLE_FOUND",
             "message": "A graph satisfying the search domain makes the conjecture false.",
             "search_complete": False,
-            "graph": {"n": graph.n, "edges": [list(edge) for edge in sorted(graph.edges)], "degrees": list(graph.degrees())},
+            "graph": {
+                "n": graph.n,
+                "edges": [list(edge) for edge in sorted(graph.edges)],
+                "degrees": list(graph.degrees()),
+            },
             "formula_value": bool(conjecture.conclusion(graph)),
         })
         output_dir = BASE_DIR / "output"
@@ -97,46 +108,82 @@ class ForgeLangHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _send_json(self, status: int, data: dict) -> None:
-        self._send(status, json.dumps(data).encode("utf-8"), "application/json; charset=utf-8")
+        self._send(
+            status,
+            json.dumps(data).encode("utf-8"),
+            "application/json; charset=utf-8",
+        )
 
     def do_GET(self):  # noqa: N802 - stdlib handler method name
         path = urlparse(self.path).path
+
         if path == "/":
             try:
-                template = (BASE_DIR / "templates" / "index.html").read_text(encoding="utf-8")
+                template = (BASE_DIR / "templates" / "index.html").read_text(
+                    encoding="utf-8"
+                )
                 page = template.replace("{{ example }}", html.escape(EXAMPLE))
                 self._send(200, page.encode("utf-8"), "text/html; charset=utf-8")
             except OSError:
-                self._send(500, b"Web interface files are missing.", "text/plain; charset=utf-8")
+                self._send(
+                    500,
+                    b"Web interface files are missing.",
+                    "text/plain; charset=utf-8",
+                )
             return
+
+        if path == "/reference":
+            reference_path = BASE_DIR / "templates" / "reference.html"
+            try:
+                page = reference_path.read_text(encoding="utf-8")
+            except OSError:
+                self._send(
+                    404,
+                    (
+                        "Reference page not found. Expected file: "
+                        f"{reference_path}"
+                    ).encode("utf-8"),
+                    "text/plain; charset=utf-8",
+                )
+                return
+            self._send(200, page.encode("utf-8"), "text/html; charset=utf-8")
+            return
+
         if path == "/api/examples":
             items = []
-            for file_path in sorted((BASE_DIR / "examples").glob("*.forge")):
+            examples_dir = BASE_DIR / "examples"
+            for file_path in sorted(examples_dir.glob("*.forge")):
                 try:
-                    items.append({"name": file_path.stem.replace("_", " ").title(),
-                                  "filename": file_path.name,
-                                  "source": file_path.read_text(encoding="utf-8")})
+                    items.append({
+                        "name": file_path.stem.replace("_", " ").title(),
+                        "filename": file_path.name,
+                        "source": file_path.read_text(encoding="utf-8"),
+                    })
                 except OSError:
                     continue
             self._send_json(200, items)
             return
+
         if path.startswith("/static/"):
             filename = path.removeprefix("/static/")
             if filename not in {"style.css", "app.js"}:
                 self._send(404, b"Not found", "text/plain; charset=utf-8")
                 return
+
             asset = BASE_DIR / "static" / filename
             try:
                 content = asset.read_bytes()
             except OSError:
                 self._send(404, b"Not found", "text/plain; charset=utf-8")
                 return
+
             content_types = {
-            "style.css": "text/css; charset=utf-8",
-            "app.js": "application/javascript; charset=utf-8",
+                "style.css": "text/css; charset=utf-8",
+                "app.js": "application/javascript; charset=utf-8",
             }
-            self._send(200, content, content_types[filename]) 
+            self._send(200, content, content_types[filename])
             return
+
         self._send(404, b"Not found", "text/plain; charset=utf-8")
 
     def do_POST(self):  # noqa: N802 - stdlib handler method name
@@ -146,13 +193,19 @@ class ForgeLangHandler(BaseHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if length < 1 or length > 1_000_000:
-                self._send_json(413, {"status": "INVALID_REQUEST", "error": "Request body must be between 1 byte and 1 MB."})
+                self._send_json(413, {
+                    "status": "INVALID_REQUEST",
+                    "error": "Request body must be between 1 byte and 1 MB.",
+                })
                 return
             data = json.loads(self.rfile.read(length).decode("utf-8"))
             if not isinstance(data, dict):
                 raise ValueError("Request body must be a JSON object.")
         except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            self._send_json(400, {"status": "INVALID_REQUEST", "error": f"Invalid JSON request: {exc}"})
+            self._send_json(400, {
+                "status": "INVALID_REQUEST",
+                "error": f"Invalid JSON request: {exc}",
+            })
             return
         status, response = run_check(data)
         self._send_json(status, response)
@@ -162,7 +215,6 @@ class ForgeLangHandler(BaseHTTPRequestHandler):
 
 
 def main():
-
     host = "0.0.0.0"
     port = int(os.environ.get("PORT", "10000"))
 
