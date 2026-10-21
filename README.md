@@ -1,0 +1,35 @@
+# Conjecture Forge
+
+A pure-Python research prototype for searching small simple graphs for counterexamples to graph-theoretic conjectures.
+
+A conjecture is represented as an implication `P(G) => Q(G)`. A counterexample is a graph for which `P(G)` is true and `Q(G)` is false.
+
+## Quick start (Python 3.10+)
+
+```bash
+python -m venv .venv
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+pip install -e .[dev]
+python main.py list
+python main.py search min-degree-two-implies-hamiltonian --max-vertices 5
+python main.py verify output/counterexample.json
+python -m pytest
+```
+
+## Built-in false claims
+- `min-degree-two-implies-hamiltonian`: every connected simple graph with minimum degree at least 2 has a Hamiltonian cycle.
+- `connected-implies-perfect-matching`: every connected simple graph with at least 2 vertices has a perfect matching.
+
+Both are false; the program should find counterexamples.
+
+## Research limitations
+There are `2^(n(n-1)/2)` labelled simple graphs on `n` vertices, so exhaustive enumeration grows extremely quickly. Isomorphic graphs may be examined more than once. The minimizer is greedy and returns a graph locally minimal under single vertex/edge deletions, not necessarily a globally smallest graph. Not finding a counterexample within a finite search bound is not a proof.
+
+## Add a conjecture
+Construct `Conjecture(name, statement, premise, conclusion)` with two deterministic predicates over `Graph`. Keep predicates side-effect-free.
+
+## Project structure
+`src/conjecture_forge/` contains graph representation, generation, conjecture definitions, search, minimization, certificates, and CLI. `tests/`, `benchmarks/`, and `docs/` contain quality and research materials.
+
+MIT licensed; see `LICENSE`.
