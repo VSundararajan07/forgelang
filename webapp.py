@@ -131,7 +131,11 @@ class ForgeLangHandler(BaseHTTPRequestHandler):
             except OSError:
                 self._send(404, b"Not found", "text/plain; charset=utf-8")
                 return
-            self._send(200, content, mimetypes.guess_type(filename)[0] + "; charset=utf-8")
+            content_types = {
+            "style.css": "text/css; charset=utf-8",
+            "app.js": "application/javascript; charset=utf-8",
+            }
+            self._send(200, content, content_types[filename]) 
             return
         self._send(404, b"Not found", "text/plain; charset=utf-8")
 
