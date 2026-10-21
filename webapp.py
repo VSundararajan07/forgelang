@@ -1,6 +1,7 @@
 """Local web interface for Conjecture Forge / ForgeLang (stdlib HTTP server)."""
 from __future__ import annotations
 
+import os
 import html
 import json
 import mimetypes
@@ -157,9 +158,11 @@ class ForgeLangHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    server = ThreadingHTTPServer(("127.0.0.1", 5000), ForgeLangHandler)
-    print("ForgeLang web interface running at http://127.0.0.1:5000")
-    print("Press Ctrl+C to stop the server.")
+    host = "0.0.0.0"
+    port = int(os.environ.get("PORT", "5000"))
+
+    server = ThreadingHTTPServer((host, port), ForgeLangHandler)
+    print(f"ForgeLang web interface running on {host}:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
