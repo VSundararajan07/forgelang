@@ -1,2 +1,4 @@
 lark>=1.1,<2
 pytest>=8.0
+Flask
+gunicorn
