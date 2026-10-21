@@ -158,11 +158,13 @@ class ForgeLangHandler(BaseHTTPRequestHandler):
 
 
 def main():
+
     host = "0.0.0.0"
-    port = int(os.environ.get("PORT", "5000"))
+    port = int(os.environ.get("PORT", "10000"))
 
     server = ThreadingHTTPServer((host, port), ForgeLangHandler)
-    print(f"ForgeLang web interface running on {host}:{port}")
+    print(f"ForgeLang web interface running on {host}:{port}", flush=True)
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:
